@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Employee Management</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background-color: #f2f2f2; }
+    input, button { padding: 6px; margin: 4px 0; }
+  </style>
+</head>
+<body>
+
+  <h1>Employee Management</h1>
+
+  <h2>Add Employee</h2>
+  <form id="employeeForm">
+    <input type="text" id="name" placeholder="Name" required />
+    <input type="text" id="department" placeholder="Department" required />
+    <input type="number" id="salary" placeholder="Salary" required min="0" />
+    <button type="submit">Add Employee</button>
+  </form>
+
+  <h2>Employee List</h2>
+  <table id="employeeTable">
+    <thead>
+      <tr><th>ID</th><th>Name</th><th>Department</th><th>Salary</th><th>Actions</th></tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+<script>
+  const apiUrl = '/api/employees';
+
+  // Fetch and show employees in table
+  async function fetchEmployees() {
+    const response = await fetch(apiUrl);
+    const employees = await response.json();
+    const tbody = document.querySelector('#employeeTable tbody');
+    tbody.innerHTML = '';
+    employees.forEach(emp => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${emp.id}</td>
+        <td>${emp.name}</td>
+        <td>${emp.department}</td>
+        <td>${emp.salary}</td>
+        <td><button onclick="deleteEmployee(${emp.id})">Delete</button></td>
+      `;
+      tbody.appendChild(row);
+    });
+  }
+
+  // Handle form submission to add employee
+  document.getElementById('employeeForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const name = document.getElementById('name').value;
+    const department = document.getElementById('department').value;
+    const salary = parseFloat(document.getElementById('salary').value);
+
+    const newEmployee = { name, department, salary };
+
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(newEmployee)
+    });
+
+    if (response.ok) {
+      // Clear form
+      e.target.reset();
+      fetchEmployees();
+    } else {
+      alert('Failed to add employee');
+    }
+  });
+
+  // Delete employee
+  async function deleteEmployee(id) {
+    if (confirm('Delete employee with ID ' + id + '?')) {
+      const response = await fetch(`${apiUrl}/${id}`, { method: 'DELETE' });
+      if (response.ok) {
+        fetchEmployees();
+      } else {
+        alert('Failed to delete employee');
+      }
+    }
+  }
+
+  // Initial fetch
+  fetchEmployees();
+</script>
+
+</body>
+</html>
